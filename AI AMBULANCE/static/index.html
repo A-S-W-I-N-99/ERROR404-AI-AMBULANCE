@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Smart City - Emergency Response System</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <main class="main-panel glass-panel">
+            <div class="panel-header">
+                <h1>Smart City<span class="accent">AI Control</span></h1>
+                <p>Advanced Emergency Response & Traffic Management</p>
+            </div>
+            
+            <div class="control-tabs">
+                <button class="tab-btn active" data-tab="dispatch">Dispatch</button>
+                <button class="tab-btn" data-tab="fleet">Fleet</button>
+                <button class="tab-btn" data-tab="analytics">Analytics</button>
+            </div>
+            
+            <div class="content-grid">
+                <!-- Left column -->
+                <div class="column left-column">
+                    <!-- Dispatch Tab -->
+                    <div class="tab-content active" id="dispatch-tab">
+                        <div class="control-group">
+                            <label>Start Location (X,Y):</label>
+                            <div class="input-row">
+                                <input type="number" id="start-x" min="0" max="11" value="0" placeholder="X">
+                                <input type="number" id="start-y" min="0" max="11" value="0" placeholder="Y">
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <label>Destination (X,Y):</label>
+                            <div class="input-row">
+                                <input type="number" id="end-x" min="0" max="11" value="11" placeholder="X">
+                                <input type="number" id="end-y" min="0" max="11" value="11" placeholder="Y">
+                            </div>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label>Hospital (optional):</label>
+                            <select id="hospital-select">
+                                <option value="">-- Direct Coordinates --</option>
+                                <option value="nearest">Nearest Hospital</option>
+                            </select>
+                        </div>
+
+                        <div class="control-group">
+                            <label>Priority Level:</label>
+                            <select id="priority">
+                                <option value="Normal">Normal (Code 2)</option>
+                                <option value="Medium" selected>Medium Emergency</option>
+                                <option value="High">High Emergency (Code 3)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label>Emergency Type:</label>
+                            <select id="emergency-type">
+                                <option value="General">General</option>
+                                <option value="Trauma">Trauma</option>
+                                <option value="Cardiac">Cardiac</option>
+                                <option value="Pediatric">Pediatric</option>
+                            </select>
+                        </div>
+
+                        <div class="action-buttons">
+                            <button id="dispatch-btn" class="btn primary-btn">🚑 Dispatch Ambulance</button>
+                        </div>
+                        
+                        <div class="status-panel glass-panel">
+                            <h3>Mission Status</h3>
+                            <div class="status-item">
+                                <span>ETA:</span> <span id="eta-display" class="highlight">--</span>
+                            </div>
+                            <div class="status-item">
+                                <span>Status:</span> <span id="mission-status" class="status-indicator standby">Standby</span>
+                            </div>
+                            <div class="status-item">
+                                <span>Weather:</span> <span id="weather-display" class="highlight">Clear</span>
+                            </div>
+                            <div class="status-item">
+                                <span>Vehicles:</span> <span id="vehicle-count" class="highlight">0</span>
+                            </div>
+                            <div id="alert-box" class="alert-box hidden">
+                                ⚠ Approaching Intersection!
+                            </div>
+                        </div>
+                        
+                        <div class="scenario-panel">
+                            <h3>Scenario</h3>
+                            <select id="scenario-select">
+                                <option value="Normal">Normal</option>
+                                <option value="Rush Hour">Rush Hour</option>
+                                <option value="Storm">Storm</option>
+                                <option value="Multi-Casualty">Multi-Casualty</option>
+                                <option value="Stadium Event">Stadium Event</option>
+                                <option value="Night Shift">Night Shift</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Fleet Tab -->
+                    <div class="tab-content" id="fleet-tab">
+                        <div class="fleet-panel">
+                            <h3>Active Units</h3>
+                            <div id="fleet-list" class="fleet-list">
+                                <div class="empty-state">No active ambulances</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Analytics Tab -->
+                    <div class="tab-content" id="analytics-tab">
+                        <div class="chart-row">
+                            <div class="chart-container">
+                                <canvas id="responseChart"></canvas>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="trafficChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="stats-grid" id="stats-grid">
+                            <div class="stat-card">
+                                <span class="stat-value" id="stat-avg-response">--</span>
+                                <span class="stat-label">Avg Response</span>
+                            </div>
+                            <div class="stat-card">
+                                <span class="stat-value" id="stat-total-routes">--</span>
+                                <span class="stat-label">Total Routes</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Right column: System Summary -->
+                <div class="column right-column">
+                    <div class="summary-panel glass-panel">
+                        <h3>System Overview</h3>
+                        <div class="summary-grid">
+                            <div class="summary-card">
+                                <div class="summary-icon">🏥</div>
+                                <div class="summary-info">
+                                    <span class="summary-value" id="hospital-count">3</span>
+                                    <span class="summary-label">Hospitals Active</span>
+                                </div>
+                            </div>
+                            <div class="summary-card">
+                                <div class="summary-icon">🚦</div>
+                                <div class="summary-info">
+                                    <span class="summary-value" id="signal-count">144</span>
+                                    <span class="summary-label">Smart Signals</span>
+                                </div>
+                            </div>
+                            <div class="summary-card">
+                                <div class="summary-icon">🤖</div>
+                                <div class="summary-info">
+                                    <span class="summary-value" id="rl-count">144</span>
+                                    <span class="summary-label">RL Controllers</span>
+                                </div>
+                            </div>
+                            <div class="summary-card">
+                                <div class="summary-icon">🌤</div>
+                                <div class="summary-info">
+                                    <span class="summary-value" id="weather-status">Clear</span>
+                                    <span class="summary-label">Current Weather</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <h3>Route History</h3>
+                        <div class="route-log" id="route-log">
+                            <div class="log-item">
+                                <span class="log-time">--:--</span>
+                                <span class="log-text">No routes calculated yet</span>
+                            </div>
+                        </div>
+                        
+                        <h3>Legend</h3>
+                        <div class="legend-panel">
+                            <div class="legend-item"><span class="color-box bg-traffic-low"></span> Low Traffic</div>
+                            <div class="legend-item"><span class="color-box bg-traffic-med"></span> Medium Traffic</div>
+                            <div class="legend-item"><span class="color-box bg-traffic-high"></span> Heavy Traffic</div>
+                            <div class="legend-item"><span class="color-box bg-path"></span> AI Route</div>
+                            <div class="legend-item"><span class="color-box bg-alt-path"></span> Alternate Route</div>
+                            <div class="legend-item"><span class="color-box bg-hospital"></span> Hospital</div>
+                            <div class="legend-item"><span class="color-box bg-ambulance"></span> Ambulance</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
+
